@@ -10,6 +10,14 @@ var closing = false;
 var client = new discord.Client();
 var me = null;
 
+if(config.client_id) {
+    //var P = discord.Constants.Permissions; // discord.Constants is null?
+    //var permissions = P.readMessages + P.sendMessages;
+    var permissions = 0x00000400 + 0x00000800; // READ_MESSAGES, SEND_MESSAGES
+    var invite_url = 'https://discordapp.com/oauth2/authorize?client_id=' + config.client_id + '&scope=bot&permissions=' + permissions;
+    console.log('Invite URL: ' + invite_url);
+}
+
 client.on('ready', () => {
     me = client.user;
     console.log('Logged in as ' + me.username + '#' + me.discriminator);
