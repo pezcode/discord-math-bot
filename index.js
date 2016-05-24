@@ -7,8 +7,11 @@ console.log('Booting...');
 
 var closing = false;
 
-var client = new discord.Client();
-var me = null;
+var client = new discord.Client({
+    revive : true // attempt reconnect when disconnected
+});
+
+var me = null; // the bot user
 
 if(config.client_id) {
     //var P = discord.Constants.Permissions; // discord.Constants is null?
@@ -44,6 +47,8 @@ client.on('ready', () => {
 client.on('serverCreated', server => {
     console.log('Joined server ' + server.name + ' (' + server.id + ')');
     checkServerLists(server);
+    // TODO write hello message
+    // write goodbye message when leaving because banned
 });
 
 client.on('serverDeleted', server => {
@@ -52,19 +57,23 @@ client.on('serverDeleted', server => {
 
 client.on('disconnected', () => {
     console.log('Disconnected');
-    process.exit(closing ? 0 : 1);
+    /*
+    if (!closing) {
+        // disconnected without explicitly logging out
+        process.exitCode = 1;
+    }
+    */
 });
 
 client.on('error', error => {
-    console.log('Fatal error: ' + error);
+    console.error('Fatal error: ' + error);
 });
 
 // graceful shutdown on CTRL+C
-// only works with node index.js, not npm start
 process.on('SIGINT', () => client.logout() );
 
 client.loginWithToken(config.bot_token)
     .catch(error => {
-        console.log('Error while logging in: ' + error);
-        process.exit(1);
+        console.error('Error while logging in: ' + error.message);
+        process.exitCode = 1;
     });
