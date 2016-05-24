@@ -1,0 +1,9 @@
+{
+  "command_prefix": ".",
+  "eval_prefix": "?",
+  "bot_token": "",
+  "client_id": "",
+  "owner_ids": [],
+  "server_whitelist": [],
+  "server_blacklist": []
+}
