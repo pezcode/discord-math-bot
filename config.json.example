@@ -4,6 +4,6 @@
   "bot_token": "",
   "client_id": "",
   "owner_ids": [],
-  "server_whitelist": [],
-  "server_blacklist": []
+  "guild_whitelist": [],
+  "guild_blacklist": []
 }
