@@ -3,7 +3,6 @@
   "eval_prefix": "?",
   "bot_token": "",
   "client_id": "",
-  "owner_ids": [],
   "guild_whitelist": [],
   "guild_blacklist": []
 }
