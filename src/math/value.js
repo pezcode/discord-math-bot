@@ -5,10 +5,10 @@ const math = require('mathjs')
 class Value {
   constructor (value) {
     this.value = value
-    this.type = this.getType()
+    this.type = Value.getType() // cache it
   }
 
-  getType (val) {
+  static getType (val) {
     const typeName = math.typeof(val)
     switch (typeName) {
       case 'Help':
@@ -31,7 +31,7 @@ class Value {
       */
       case 'string':
         return 'string'
-      case 'ResultSet':
+      case 'ResultSet': // multiline eval
         return 'set'
       default:
         return typeName
