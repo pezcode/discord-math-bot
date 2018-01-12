@@ -3,9 +3,18 @@
 const discord = require('discord.js')
 
 class DiscordBot {
-  constructor (config) {
-    this.config = config
+  constructor (options) {
+    this.options = options
     this.client = new discord.Client()
+
+    this.commands = { }
+    this.adminCommands = {
+      stop: (message) => {
+        // wait a second before shutting down
+        setTimeout(this.stop.bind(this), 1000)
+        message.reply('Shutting down')
+      }
+    }
 
     this.client.on('ready', this.onReady.bind(this))
     this.client.on('disconnect', this.onDisconnect.bind(this))
@@ -13,6 +22,7 @@ class DiscordBot {
     this.client.on('warn', this.onWarning.bind(this))
     this.client.on('guildCreate', this.onGuildCreate.bind(this))
     this.client.on('guildDelete', this.onGuildDelete.bind(this))
+    this.client.on('message', this.onMessage.bind(this))
   }
 
   start () {
@@ -26,7 +36,7 @@ class DiscordBot {
   }
 
   login () {
-    this.client.login(this.config.bot_token)
+    this.client.login(this.options.bot_token)
         .then(token => this.client.generateInvite(['VIEW_CHANNEL', 'SEND_MESSAGES']))
         .then(link => {
           console.log('Invite link: ' + link)
@@ -40,28 +50,78 @@ class DiscordBot {
     this.client.destroy()
   }
 
+  isMe (user) {
+    return (user.id === this.client.user.id)
+  }
+
+
   isOwner (user) {
-    return (this.config.owner_ids.indexOf(user.id) !== -1)
+    return (this.options.owner_ids.indexOf(user.id) !== -1)
   }
 
   checkGuildLists(guild) {
       // whitelist overrides blacklist
-      if(this.config.guild_whitelist.length > 0 && this.config.guild_whitelist.indexOf(guild.id) === -1) {
-          console.log('Leaving ' + guild.name + ', not on whitelist')
-          guild.leave()
+      if(this.options.guild_whitelist.length > 0 && this.options.guild_whitelist.indexOf(guild.id) === -1) {
+          console.log('Guild ' + guild.name + ' not on whitelist')
+          return false
       }
-      if(this.config.guild_blacklist.indexOf(guild.id) !== -1) {
-          console.log('Leaving ' + guild.name + ', on blacklist')
-          guild.leave()
+      if(this.options.guild_blacklist.indexOf(guild.id) !== -1) {
+          console.log('Guild ' + guild.name + ' on blacklist')
+          return false
       }
+      return true
   }
 
+  parseCommand (content) {
+    if (content.startsWith(this.options.command_prefix)) {
+      const parts = content.split(' ')
+      const name = parts[0].substring(this.options.command_prefix.length).toLowerCase()
+      const found = (name in this.commands)
+      const foundAdmin = (name in this.adminCommands)
+      return {
+        valid: found || foundAdmin,
+        admin: foundAdmin,
+        name: name,
+        args: parts.slice(1),
+        func: foundAdmin ? this.adminCommands[name] : this.commands[name]
+      }
+    } else {
+      return null
+    }
+  }
+
+  handleIfCommand (message) {
+    const command = this.parseCommand(message.cleanContent)
+    if (command) {
+      if (command.valid) {
+        if (command.admin && !this.isOwner(message.author)) {
+          message.reply('Command ' + command.name + ' only invocable by bot owner')
+          console.log('Command ' + command.name + ' only invocable by bot owner')
+        } else {
+          console.log('Invoking command ' + command.name)
+          command.func(message, command.args)
+        }
+      } else {
+        message.reply('Invalid command: ' + command.name)
+        console.log('Invalid command: ' + command.name)
+      }
+      return true
+    } else {
+      return false
+    }
+  }
+
+  // Events
+
   onReady () {
-    console.log('Logged in as ' + this.client.user.tag);
-    this.client.guilds.forEach(guild => {
-        console.log('Connected to server ' + guild.name + ' (' + guild.id + ')')
-        this.checkGuildLists(guild)
-    })
+    console.log('Logged in as ' + this.client.user.tag)
+    for (const guild of this.client.guilds.values()) {
+      console.log('Connected to server ' + guild.name + ' (' + guild.id + ')')
+      if (!this.checkGuildLists(guild)) {
+        console.log('Leaving guild')
+        guild.leave()
+      }
+    }
   }
 
   onDisconnect (event) {
@@ -82,13 +142,45 @@ class DiscordBot {
 
   onGuildCreate (guild) {
       console.log('Joined guild ' + guild.name + ' (' + guild.id + ')')
-      this.checkGuildLists(guild)
+      if (!this.checkGuildLists(guild)) {
+        console.log('Leaving guild')
+        guild.leave()
+      }
       // TODO write hello message
   }
 
   onGuildDelete (guild) {
       console.log('Left guild ' + guild.name + ' (' + guild.id + ')')
       // TODO write goodbye message? Is that possible?
+  }
+
+  // Chat messages
+
+  onMessage (message) {
+    if (!this.isMe(message.author)) {
+      switch (message.channel.type) {
+        case 'dm':
+          this.onDirectMessage(message)
+          break
+        case 'text':
+          this.onChannelMessage(message)
+          break
+        // case 'groupdm': // bots can't be in group DMs
+        // case 'voice': // can't get message in voice chat
+        default:
+          break
+      }
+    }
+  }
+
+  onDirectMessage (message) {
+    console.log('Direct message from ' + message.author.tag + ': ' + message.cleanContent)
+    return this.handleIfCommand(message)
+  }
+
+  onChannelMessage (message) {
+    console.log('Text message from ' + message.author.tag + ' in ' + message.guild.name + '#' + message.channel.name + ': ' + message.cleanContent)
+    return this.handleIfCommand(message)
   }
 }
 

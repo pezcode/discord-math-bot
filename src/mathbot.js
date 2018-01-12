@@ -5,13 +5,31 @@ let DiscordBot = require('./discordbot.js')
 class MathBot extends DiscordBot {
   constructor (options) {
     super(options)
-    this.client.on('message', this.onMessage.bind(this))
+
+    Object.assign(this.commands, {
+      // no additional commands
+    })
+
+    Object.assign(this.adminCommands, {
+      // no additional admin commands
+    })
   }
 
-  onMessage (message) {
-    console.log('Message from ' + message.author.tag + ': ' + message.cleanContent);
-    if (this.isOwner(message.author) && message.cleanContent.toLowerCase() === 'stop') {
-      this.stop()
+  onDirectMessage (message) {
+    const handled = super.onDirectMessage(message)
+    if (!handled) {
+      // - check if eval
+      // - just eval
+      console.log('No command')
+    }
+  }
+
+  onChannelMessage (message) {
+    const handled = super.onChannelMessage(message)
+    if (!handled) {
+      // - check if mentioned
+      // - check if eval
+      console.log('No command')
     }
   }
 }
