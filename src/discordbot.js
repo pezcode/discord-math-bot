@@ -9,7 +9,7 @@ class DiscordBot {
 
     this.commands = { }
     this.adminCommands = {
-      stop: (message) => {
+      stop: () => {
         // wait a second before shutting down
         setTimeout(this.stop.bind(this), 1000)
       }
