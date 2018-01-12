@@ -73,7 +73,7 @@ class DiscordBot {
 
   parseCommand (content) {
     if (content.startsWith(this.options.command_prefix)) {
-      const parts = content.split(' ')
+      const parts = content.trim().split(' ')
       const name = parts[0].substring(this.options.command_prefix.length).toLowerCase()
       const found = (name in this.commands)
       const foundAdmin = (name in this.adminCommands)
@@ -98,7 +98,7 @@ class DiscordBot {
           console.log('Command ' + command.name + ' only invocable by bot owner')
         } else {
           console.log('Invoking command ' + command.name)
-          const reply = command.func(command.args)
+          const reply = command.func(message, command.args)
           if (reply) {
             message.reply(reply)
           }
@@ -111,6 +111,14 @@ class DiscordBot {
     } else {
       return false
     }
+  }
+
+  isDirectMessage (message) {
+    return (message.channel.type === 'dm')
+  }
+
+  isGuildMessage (message) {
+    return (message.channel.type === 'text')
   }
 
   // Events
@@ -159,17 +167,10 @@ class DiscordBot {
 
   onMessage (message) {
     if (!this.isMe(message.author)) {
-      switch (message.channel.type) {
-        case 'dm':
-          this.onDirectMessage(message)
-          break
-        case 'text':
-          this.onGuildMessage(message)
-          break
-        // case 'groupdm': // bots can't be in group DMs
-        // case 'voice': // can't get message in voice chat
-        default:
-          break
+      if (this.isDirectMessage(message)) {
+        this.onDirectMessage(message)
+      } else if (this.isGuildMessage(message)) {
+        this.onGuildMessage(message)
       }
     }
   }
