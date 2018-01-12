@@ -4,7 +4,8 @@
   "description": "A Discord bot for doing math",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "lint": "eslint ."
   },
   "repository": {
     "type": "git",
@@ -14,5 +15,13 @@
   "dependencies": {
     "discord.js": "^11.2.1",
     "mathjs": "^3.19.0"
+  },
+  "devDependencies": {
+    "eslint": "^4.15.0",
+    "eslint-config-standard": "^11.0.0-beta.0",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-node": "^5.2.1",
+    "eslint-plugin-promise": "^3.6.0",
+    "eslint-plugin-standard": "^3.0.1"
   }
 }

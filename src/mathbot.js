@@ -1,18 +1,26 @@
 'use strict'
 
-let DiscordBot = require('./discordbot.js')
+const DiscordBot = require('./discordbot.js')
+const Parser = require('./math/parser.js')
 
 class MathBot extends DiscordBot {
   constructor (options) {
     super(options)
 
     Object.assign(this.commands, {
-      // no additional commands
+      clear: () => {
+        this.parser.clear()
+        console.log('Clearing parser scope')
+        return 'Scope cleared'
+      }
     })
 
     Object.assign(this.adminCommands, {
       // no additional admin commands
     })
+
+    // TODO keep parser per user
+    this.parser = new Parser()
   }
 
   onDirectMessage (message) {
@@ -20,16 +28,14 @@ class MathBot extends DiscordBot {
     if (!handled) {
       // - check if eval
       // - just eval
-      console.log('No command')
     }
   }
 
-  onChannelMessage (message) {
-    const handled = super.onChannelMessage(message)
+  onGuildMessage (message) {
+    const handled = super.onGuildMessage(message)
     if (!handled) {
       // - check if mentioned
       // - check if eval
-      console.log('No command')
     }
   }
 }

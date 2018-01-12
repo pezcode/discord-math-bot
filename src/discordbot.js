@@ -12,7 +12,6 @@ class DiscordBot {
       stop: (message) => {
         // wait a second before shutting down
         setTimeout(this.stop.bind(this), 1000)
-        message.reply('Shutting down')
       }
     }
 
@@ -31,19 +30,20 @@ class DiscordBot {
   }
 
   stop () {
+    console.log('Shutting down')
     this.exit = true
     this.logout()
   }
 
   login () {
     this.client.login(this.options.bot_token)
-        .then(token => this.client.generateInvite(['VIEW_CHANNEL', 'SEND_MESSAGES']))
-        .then(link => {
-          console.log('Invite link: ' + link)
-        })
-        .catch(error => {
-            console.error('Error while logging in: ' + error.message);
-        })
+      .then(token => this.client.generateInvite(['VIEW_CHANNEL', 'SEND_MESSAGES']))
+      .then(link => {
+        console.log('Invite link: ' + link)
+      })
+      .catch(error => {
+        console.error('Error while logging in: ' + error.message)
+      })
   }
 
   logout () {
@@ -54,22 +54,21 @@ class DiscordBot {
     return (user.id === this.client.user.id)
   }
 
-
   isOwner (user) {
     return (this.options.owner_ids.indexOf(user.id) !== -1)
   }
 
-  checkGuildLists(guild) {
-      // whitelist overrides blacklist
-      if(this.options.guild_whitelist.length > 0 && this.options.guild_whitelist.indexOf(guild.id) === -1) {
-          console.log('Guild ' + guild.name + ' not on whitelist')
-          return false
-      }
-      if(this.options.guild_blacklist.indexOf(guild.id) !== -1) {
-          console.log('Guild ' + guild.name + ' on blacklist')
-          return false
-      }
-      return true
+  checkGuildLists (guild) {
+    // whitelist overrides blacklist
+    if (this.options.guild_whitelist.length > 0 && this.options.guild_whitelist.indexOf(guild.id) === -1) {
+      console.log('Guild ' + guild.name + ' not on whitelist')
+      return false
+    }
+    if (this.options.guild_blacklist.indexOf(guild.id) !== -1) {
+      console.log('Guild ' + guild.name + ' on blacklist')
+      return false
+    }
+    return true
   }
 
   parseCommand (content) {
@@ -99,7 +98,10 @@ class DiscordBot {
           console.log('Command ' + command.name + ' only invocable by bot owner')
         } else {
           console.log('Invoking command ' + command.name)
-          command.func(message, command.args)
+          const reply = command.func(command.args)
+          if (reply) {
+            message.reply(reply)
+          }
         }
       } else {
         message.reply('Invalid command: ' + command.name)
@@ -125,33 +127,32 @@ class DiscordBot {
   }
 
   onDisconnect (event) {
-      console.log('Disconnected with code ' + event.code + ' (' + event.reason + ')');
-      if (this.exit) {
-        console.log('Shutting down')
-        process.exit(0)
-      }
+    console.log('Disconnected with code ' + event.code + ' (' + event.reason + ')')
+    if (this.exit) {
+      process.exit(0)
+    }
   }
 
   onError (error) {
-      console.error('Fatal error: ' + error.message)
+    console.error('Fatal error: ' + error.message)
   }
 
   onWarning (info) {
-      console.log('Warning: ' + info)
+    console.log('Warning: ' + info)
   }
 
   onGuildCreate (guild) {
-      console.log('Joined guild ' + guild.name + ' (' + guild.id + ')')
-      if (!this.checkGuildLists(guild)) {
-        console.log('Leaving guild')
-        guild.leave()
-      }
-      // TODO write hello message
+    console.log('Joined guild ' + guild.name + ' (' + guild.id + ')')
+    if (!this.checkGuildLists(guild)) {
+      console.log('Leaving guild')
+      guild.leave()
+    }
+    // TODO write hello message
   }
 
   onGuildDelete (guild) {
-      console.log('Left guild ' + guild.name + ' (' + guild.id + ')')
-      // TODO write goodbye message? Is that possible?
+    console.log('Left guild ' + guild.name + ' (' + guild.id + ')')
+    // TODO write goodbye message? Is that possible?
   }
 
   // Chat messages
@@ -163,7 +164,7 @@ class DiscordBot {
           this.onDirectMessage(message)
           break
         case 'text':
-          this.onChannelMessage(message)
+          this.onGuildMessage(message)
           break
         // case 'groupdm': // bots can't be in group DMs
         // case 'voice': // can't get message in voice chat
@@ -178,8 +179,8 @@ class DiscordBot {
     return this.handleIfCommand(message)
   }
 
-  onChannelMessage (message) {
-    console.log('Text message from ' + message.author.tag + ' in ' + message.guild.name + '#' + message.channel.name + ': ' + message.cleanContent)
+  onGuildMessage (message) {
+    console.log('Message from ' + message.author.tag + ' in [' + message.guild.name + ']#' + message.channel.name + ': ' + message.cleanContent)
     return this.handleIfCommand(message)
   }
 }
