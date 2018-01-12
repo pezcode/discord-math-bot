@@ -50,8 +50,12 @@ class DiscordBot {
     this.client.destroy()
   }
 
+  me () {
+    return this.client.user
+  }
+
   isMe (user) {
-    return (user.id === this.client.user.id)
+    return (user.id === this.me().id)
   }
 
   isOwner (user) {

@@ -72,30 +72,45 @@ class MathBot extends DiscordBot {
     return value.toString()
   }
 
-  onDirectMessage (message) {
-    const handled = super.onDirectMessage(message)
-    if (!handled) {
-      // always eval the message, but strip eval prefix if necessary
-      let content = message.cleanContent
-      if (content.startsWith(this.options.eval_prefix)) {
-        content = content.substring(this.options.eval_prefix.length)
-      }
-      const result = this.evalMessage(message.channel.id, content)
-      message.reply(result)
+  isEvalMessage (content) {
+    return content.startsWith(this.options.eval_prefix)
+  }
+
+  stripEvalPrefix (content) {
+    if (content.startsWith(this.options.eval_prefix)) {
+      return content.substring(this.options.eval_prefix.length)
+    } else {
+      return content
     }
   }
 
-  onGuildMessage (message) {
-    const handled = super.onGuildMessage(message)
+  onDirectMessage (message) {
+    let handled = super.onDirectMessage(message)
     if (!handled) {
-      // TODO check if mentioned
-      let content = message.cleanContent
-      if (content.startsWith(this.options.eval_prefix)) {
-        content = content.substring(this.options.eval_prefix.length)
-        const result = this.evalMessage(message.channel.id, content)
-        message.reply(result)
-      }
+      // always eval the message, but strip prefix if necessary
+      const content = this.stripEvalPrefix(message.cleanContent)
+      const result = this.evalMessage(message.channel.id, content)
+      message.reply(result)
+      handled = true
     }
+    return handled
+  }
+
+  onGuildMessage (message) {
+    let handled = super.onGuildMessage(message)
+    if (!handled) {
+      let content = message.cleanContent
+      if (this.isEvalMessage(content)) {
+        content = this.stripEvalPrefix(content)
+      } else if (!message.isMentioned(this.me())) {
+        // ignore message
+        return
+      }
+      const result = this.evalMessage(message.channel.id, content)
+      message.reply(result)
+      handled = true
+    }
+    return handled
   }
 
   onCommandHelp (message, params) {
