@@ -45,11 +45,10 @@ class MathBot extends DiscordBot {
   }
 
   evalMessage (channelId, content) {
-    // https://support.discordapp.com/hc/en-us/articles/210298617-Markdown-Text-101-Chat-Formatting-Bold-Italic-Underline-
     let scope = this.getScope(channelId)
     try {
-      const parser = new Parser(content) // throws Error (blocked function)
-      const node = parser.parse(scope) // throws SyntaxError
+      const parser = new Parser(content)
+      const node = parser.parse(scope) // throws Error (blocked function), SyntaxError
       const result = node.eval() // throws Error
       return this.formatEvalResult(result)
     } catch (err) {
@@ -105,10 +104,10 @@ class MathBot extends DiscordBot {
       // item help
       const item = params[0]
       try {
-        helptext = MathBot.helpIcon + '**' + item + '**' + '\n' +
+        helptext = MathBot.helpIcon + ' **' + item + '**\n' +
           '```' + math.help(item) + '```'
       } catch (err) {
-        helptext = MathBot.errorIcon + 'No documentation found for **' + item + '**'
+        helptext = MathBot.errorIcon + ' No documentation found for **' + item + '**'
       }
       // ignore extra params
     } else {
@@ -122,21 +121,17 @@ class MathBot extends DiscordBot {
   }
 
   onCommandClear (message, params) {
-    if (params.length > 0) {
-      // clear scopes with given ids
-      if (!this.isOwner(message.author)) {
-        // need admin to clear individual scopes
-      } else {
-        for (const id of arguments) {
-          this.deleteScope(id)
-        }
-      }
-    } else {
-      // no params, clear current channel scope
+    // clear current channel scope
+    if (this.isDirectMessage(message) ||
+        this.isOwner(message.user) ||
+        message.member.hasPermission('MANAGE_CHANNELS', false, true, true)) {
       this.deleteScope(message.channel.id)
-      console.log('Clearing parser scope')
-      return 'Scope cleared'
+    } else {
+      console.log('Attempted to clear scope without permission')
+      return MathBot.errorIcon + ' MANAGE_CHANNELS permission / admin / server owner role required'
     }
+    console.log('Clearing parser scope')
+    return 'Scope cleared'
   }
 
   onCommandClearAll (message) {
