@@ -44,10 +44,35 @@ class MathBot extends DiscordBot {
     this.scopes.clear()
   }
 
-  evalMessage (channelId, content) {
-    let scope = this.getScope(channelId)
+  hasEvalPrefix (message) {
+    return message.stripped.startsWith(this.options.eval_prefix)
+  }
+
+  stripEvalPrefix (content) {
+    if (content.startsWith(this.options.eval_prefix)) {
+      return content.substring(this.options.eval_prefix.length)
+    } else {
+      return content
+    }
+  }
+
+  handleEvalMessage (message) {
+    const content = this.stripEvalPrefix(message.stripped)
+    if (!content) {
+      console.log('Empty message')
+      return false
+    } else {
+      let scope = this.getScope(message.channel.id)
+      const result = this.evalExpression(content, scope)
+      // save scope here
+      message.reply(result)
+      return true
+    }
+  }
+
+  evalExpression (expression, scope) {
     try {
-      const parser = new Parser(content)
+      const parser = new Parser(expression)
       const node = parser.parse(scope) // throws Error (blocked function), SyntaxError
       const result = node.eval() // throws Error
       return this.formatEvalResult(result)
@@ -68,30 +93,16 @@ class MathBot extends DiscordBot {
     // TODO prettify
     // check type -> value.getType
     // dont print Function
+    // TODO return help for Function? return this.onCommandHelp(name)
     // generic Object? -> make sure it's not from mathjs and printable
     return value.toString()
-  }
-
-  isEvalMessage (content) {
-    return content.startsWith(this.options.eval_prefix)
-  }
-
-  stripEvalPrefix (content) {
-    if (content.startsWith(this.options.eval_prefix)) {
-      return content.substring(this.options.eval_prefix.length)
-    } else {
-      return content
-    }
   }
 
   onDirectMessage (message) {
     let handled = super.onDirectMessage(message)
     if (!handled) {
-      // always eval the message, but strip prefix if necessary
-      const content = this.stripEvalPrefix(message.cleanContent)
-      const result = this.evalMessage(message.channel.id, content)
-      message.reply(result)
-      handled = true
+      // always eval the message
+      handled = this.handleEvalMessage(message)
     }
     return handled
   }
@@ -99,16 +110,9 @@ class MathBot extends DiscordBot {
   onGuildMessage (message) {
     let handled = super.onGuildMessage(message)
     if (!handled) {
-      let content = message.cleanContent
-      if (this.isEvalMessage(content)) {
-        content = this.stripEvalPrefix(content)
-      } else if (!message.isMentioned(this.me())) {
-        // ignore message
-        return
+      if (this.hasEvalPrefix(message) || message.isMentioned(this.me())) {
+        handled = this.handleEvalMessage(message)
       }
-      const result = this.evalMessage(message.channel.id, content)
-      message.reply(result)
-      handled = true
     }
     return handled
   }

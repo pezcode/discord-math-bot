@@ -94,26 +94,28 @@ class DiscordBot {
   }
 
   handleIfCommand (message) {
-    const command = this.parseCommand(message.cleanContent)
-    if (command) {
-      if (command.valid) {
-        if (command.admin && !this.isOwner(message.author)) {
-          message.reply('Command ' + command.name + ' only invocable by bot owner')
-          console.log('Command ' + command.name + ' only invocable by bot owner')
-        } else {
-          console.log('Invoking command ' + command.name)
-          const reply = command.func(message, command.args)
-          if (reply) {
-            message.reply(reply)
-          }
-        }
+    const command = this.parseCommand(message.content) // don't strip mentions, can be params
+    if (!command) {
+      return false
+    } else if (!command.valid) {
+      console.log('Unknown command: ' + command.name)
+      return false
+    } else {
+      let reply = null
+      if (message.author.bot) {
+        console.log('Command invoked by a bot, ignoring')
+        reply = "Bots can't run commands"
+      } else if (command.admin && !this.isOwner(message.author)) {
+        console.log('Command ' + command.name + ' only invocable by bot owner')
+        reply = 'Command ' + command.name + ' only invocable by bot owner'
       } else {
-        message.reply('Invalid command: ' + command.name)
-        console.log('Invalid command: ' + command.name)
+        console.log('Invoking command ' + command.name)
+        reply = command.func(message, command.args)
+      }
+      if (reply) {
+        message.reply(reply)
       }
       return true
-    } else {
-      return false
     }
   }
 
@@ -123,6 +125,10 @@ class DiscordBot {
 
   isGuildMessage (message) {
     return (message.channel.type === 'text')
+  }
+
+  stripMentions (text) {
+    return text.replace(/<@[0-9]+>/g, '')
   }
 
   // Events
@@ -170,7 +176,8 @@ class DiscordBot {
   // Chat messages
 
   onMessage (message) {
-    if (!this.isMe(message.author)) {
+    message.stripped = this.stripMentions(message.content).trim()
+    if (!this.isMe(message.author) && !message.system) {
       if (this.isDirectMessage(message)) {
         this.onDirectMessage(message)
       } else if (this.isGuildMessage(message)) {
@@ -180,12 +187,12 @@ class DiscordBot {
   }
 
   onDirectMessage (message) {
-    console.log('Direct message from ' + message.author.tag + ': ' + message.cleanContent)
+    console.log('Direct message from ' + message.author.tag + ': ' + message.content)
     return this.handleIfCommand(message)
   }
 
   onGuildMessage (message) {
-    console.log('Message from ' + message.author.tag + ' in [' + message.guild.name + ']#' + message.channel.name + ': ' + message.cleanContent)
+    console.log('Message from ' + message.author.tag + ' in [' + message.guild.name + ']#' + message.channel.name + ': ' + message.content)
     return this.handleIfCommand(message)
   }
 }
