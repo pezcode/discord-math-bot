@@ -22,6 +22,7 @@ class Parser {
   }
   */
 
+  // TODO prevent function assignment
   parse (scope = {}) {
     // Parser.oldImports.parse(this.expression)
     const tree = math.parse(this.expression)

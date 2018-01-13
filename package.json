@@ -14,7 +14,9 @@
   "license": "ISC",
   "dependencies": {
     "discord.js": "^11.2.1",
-    "mathjs": "^3.19.0"
+    "dotenv": "^4.0.0",
+    "mathjs": "^3.19.0",
+    "nano": "^6.4.2"
   },
   "devDependencies": {
     "eslint": "^4.15.0",

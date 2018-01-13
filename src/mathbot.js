@@ -3,6 +3,7 @@
 const DiscordBot = require('./discordbot.js')
 const Parser = require('./math/parser.js')
 const math = require('mathjs')
+const Store = require('./store.js')
 
 class MathBot extends DiscordBot {
   constructor (options) {
@@ -13,35 +14,7 @@ class MathBot extends DiscordBot {
       help: this.onCommandHelp.bind(this)
     })
 
-    Object.assign(this.adminCommands, {
-      clearall: this.onCommandClearAll.bind(this)
-    })
-
-    // TODO persist scopes
-    // use CouchDB and nano js bindings
-    // eventual consistency
-    // -> good for sharding
-    this.scopes = new Map()
-  }
-
-  getScope (id, create = true) {
-    if (this.scopes.has(id)) {
-      return this.scopes.get(id)
-    } else {
-      let scope = { }
-      if (create) {
-        this.scopes.set(id, scope)
-      }
-      return scope
-    }
-  }
-
-  deleteScope (id) {
-    this.scopes.delete(id)
-  }
-
-  deleteAllScopes () {
-    this.scopes.clear()
+    this.scopes = new Store()
   }
 
   hasEvalPrefix (message) {
@@ -62,10 +35,16 @@ class MathBot extends DiscordBot {
       console.log('Empty message')
       return false
     } else {
-      let scope = this.getScope(message.channel.id)
-      const result = this.evalExpression(content, scope)
-      // save scope here
-      message.reply(result)
+      this.scopes.load(message.channel.id, doc => {
+        let scope = doc.content
+        console.log(doc)
+        console.log(scope)
+        const result = this.evalExpression(content, scope)
+        doc.content = scope
+        console.log(doc)
+        this.scopes.save(message.channel.id, doc)
+        message.reply(result)
+      })
       return true
     }
   }
@@ -139,24 +118,18 @@ class MathBot extends DiscordBot {
     return helptext
   }
 
-  onCommandClear (message, params) {
+  onCommandClear (message) {
     // clear current channel scope
     if (this.isDirectMessage(message) ||
         this.isOwner(message.user) ||
         message.member.hasPermission('MANAGE_CHANNELS', false, true, true)) {
-      this.deleteScope(message.channel.id)
+      this.scopes.delete(message.channel.id)
     } else {
       console.log('Attempted to clear scope without permission')
       return MathBot.errorIcon + ' MANAGE_CHANNELS permission / admin / server owner role required'
     }
     console.log('Clearing parser scope')
     return 'Scope cleared'
-  }
-
-  onCommandClearAll (message) {
-    this.deleteAllScopes()
-    console.log('Clearing all parser scopes')
-    return 'All scopes cleared'
   }
 }
 
