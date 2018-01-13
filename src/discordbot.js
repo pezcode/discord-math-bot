@@ -76,7 +76,7 @@ class DiscordBot {
   }
 
   parseCommand (content) {
-    if (content.length > this.options.command_prefix && content.startsWith(this.options.command_prefix)) {
+    if ((content.length > this.options.command_prefix.length) && content.startsWith(this.options.command_prefix)) {
       const parts = content.trim().split(' ')
       const name = parts[0].substring(this.options.command_prefix.length).toLowerCase()
       const found = (name in this.commands)
@@ -112,7 +112,7 @@ class DiscordBot {
         console.log('Invoking command ' + command.name)
         reply = command.func(message, command.args)
       }
-      if (reply) {
+      if (reply) { // command.func doesn't necessarily return a message
         message.reply(reply)
       }
       return true
