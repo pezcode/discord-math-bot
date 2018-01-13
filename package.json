@@ -5,6 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "forever": "forever start -a --uid discord-math-bot index.js",
+    "forever-stop": "forever stop discord-math-bot",
+    "watch": "nodemon index.js",
     "lint": "eslint ."
   },
   "repository": {
@@ -15,6 +18,7 @@
   "dependencies": {
     "discord.js": "^11.2.1",
     "dotenv": "^4.0.0",
+    "forever": "^0.15.3",
     "mathjs": "^3.19.0",
     "nano": "^6.4.2"
   },
@@ -24,7 +28,8 @@
     "eslint-plugin-import": "^2.8.0",
     "eslint-plugin-node": "^5.2.1",
     "eslint-plugin-promise": "^3.6.0",
-    "eslint-plugin-standard": "^3.0.1"
+    "eslint-plugin-standard": "^3.0.1",
+    "nodemon": "^1.14.11"
   },
   "engines": {
     "node": ">=6.0.0"

@@ -37,11 +37,8 @@ class MathBot extends DiscordBot {
     } else {
       this.scopes.load(message.channel.id, doc => {
         let scope = doc.content
-        console.log(doc)
-        console.log(scope)
         const result = this.evalExpression(content, scope)
         doc.content = scope
-        console.log(doc)
         this.scopes.save(message.channel.id, doc)
         message.reply(result)
       })
