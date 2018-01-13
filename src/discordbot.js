@@ -76,7 +76,7 @@ class DiscordBot {
   }
 
   parseCommand (content) {
-    if (content.startsWith(this.options.command_prefix)) {
+    if (content.length > this.options.command_prefix && content.startsWith(this.options.command_prefix)) {
       const parts = content.trim().split(' ')
       const name = parts[0].substring(this.options.command_prefix.length).toLowerCase()
       const found = (name in this.commands)
