@@ -10,7 +10,21 @@ You'll probably want to read about:
 - [functions](http://mathjs.org/docs/reference/functions.html)
 - [available constants](http://mathjs.org/docs/reference/constants.html)
 
-A small tip: You can write multiline expressions so you don't have to wait a for a reply  after each line (Shift+Enter creates a new line in the Discord message field).
+## Multiline expressions
+
+You can write multiline expressions so you don't have to wait a for a reply after each line. It also keeps the chat window cleaner without intermediate results after each expression.
+
+There are two ways to do this:
+- `Shift + Enter` in Discord's message field creates a new line instead of sending the message
+- Seperate expressions with a semicolon:
+```js
+a = 3; b = 2; a + b
+```
+
+There is another advantage: For security reasons you can't keep functions in the global scope (see *Scope* further below). Allowing that would mean loading and executing arbitrary JavaScript functions from the database. To still be able to define and use functions, you need to do it all within one message:
+```js
+f(x)=x^2; f(3)
+```
 
 ## Examples
 
@@ -97,6 +111,9 @@ det(A) // -7
 
 #### Misc
 ```js
+// functions
+f(x)=x^2
+f(3) // -> 9
 // objects
 k = {a: 1, b: 2}
 k.a + k.b // -> 3
