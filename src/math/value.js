@@ -5,49 +5,31 @@ const math = require('mathjs')
 class Value {
   constructor (value) {
     this.value = value
-    this.type = Value.getType() // cache it
+    this.type = math.typeof(this.value)
   }
 
-  static getType (val) {
-    const typeName = math.typeof(val)
-    switch (typeName) {
-      case 'Help':
-        return 'help'
-      case 'number':
-      case 'BigNumber':
-      case 'Complex':
-      case 'Fraction':
-      case 'boolean':
-      case 'Array':
-      case 'Matrix':
-      case 'Unit':
-        return 'number'
-      /*
+  // http://mathjs.org/docs/reference/functions/typeof.html
+  toString () {
+    /*
+    Some notes:
+      - Arrays after parsing become type Matrix, even if just one row
+      - ResultSet comes back as Object, but isResultSet is set
+    */
+    switch (this.type) {
+      case 'undefined':
+        return 'undefined'
+      case 'null':
+        return 'null'
       case 'Object':
         try {
-          reply = JSON.stringify(val)
-        } catch (e) { } // shrug
-        break
-      */
-      case 'string':
-        return 'string'
-      case 'ResultSet': // multiline eval
-        return 'set'
-      default:
-        return typeName
-    }
-  }
-
-  toString () {
-    switch (this.type) {
-      // case 'help':
-      // case 'number':
+          return JSON.stringify(this.value, null, 2)
+        } catch (err) {
+          return 'Object with ' + Object.keys(this.value).length + ' items'
+        }
+      case 'Function':
+        return 'Function ' + this.value.name
       default:
         return this.value.toString()
-      case 'string':
-        return '"' + this.value.toString() + '"'
-      case 'set':
-        return this.value.entries.join('\n')
     }
   }
 }

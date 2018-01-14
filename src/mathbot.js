@@ -2,15 +2,9 @@
 
 const DiscordBot = require('./discordbot.js')
 const Parser = require('./math/parser.js')
+const Value = require('./math/value.js')
 const math = require('mathjs')
 const Store = require('./store.js')
-
-/*
-TODO
-check if we have write access to channel before evaluating
-send multiple messages if message exceeds character limit (see send options of discord.js)
-cache scopes in memory
-*/
 
 class MathBot extends DiscordBot {
   constructor (options) {
@@ -45,9 +39,9 @@ class MathBot extends DiscordBot {
       this.scopes.load(message.channel.id, doc => {
         let scope = doc.content
         const result = this.evalExpression(content, scope)
+        message.reply(result)
         doc.content = scope
         this.scopes.save(message.channel.id, doc)
-        message.reply(result)
       }, math.json.reviver) // http://mathjs.org/examples/serialization.js.html
       return true
     }
@@ -57,29 +51,35 @@ class MathBot extends DiscordBot {
     try {
       const parser = new Parser(expression)
       const node = parser.parse(scope) // throws Error (blocked function), SyntaxError
-      const result = node.eval() // throws Error
-      return this.formatEvalResult(result)
+      const result = node.eval() // throws Error, TypeError, DimensionError, RangeError
+      return '```js\n' + this.formatEvalResult(result) + '\n```'
     } catch (err) {
-      // DimensionError (matrix)
-      if (err instanceof SyntaxError) {
-        // err.char = position
-      } else if (err instanceof TypeError) {
-        // err.expected = array of strings with names of expected types
-        // err.actual = object (can use math.typeof to get the name)
-      }
       console.error(err)
       return MathBot.errorIcon + ' ' + err.message
     }
   }
 
-  formatEvalResult (value) {
-    // TODO prettify
-    // check type -> value.getType
-    // dont print Function
-    // TODO return help for Function? return this.onCommandHelp(name)
-    // generic Object? -> make sure it's not from mathjs and printable
-    // ResultSet -> only print last result
-    return value.toString()
+  formatEvalResult (result) {
+    console.log(result)
+    switch (result.type) {
+      case 'string':
+        return '"' + result.toString() + '"'
+      case 'Object':
+        if (result.value.isResultSet) { // only show last
+          const set = result.value.entries
+          return this.formatEvalResult(new Value(set[set.length - 1]))
+        } else {
+          return result.toString()
+        }
+      case 'Matrix': // one line for each row, but not for too large matrices
+        if (result.value._size.length === 2 && result.value._size[0] <= 10) {
+          return '[' + result.value._data.join(']\n[') + ']'
+        } else {
+          return result.toString()
+        }
+      default:
+        return result.toString()
+    }
   }
 
   onDirectMessage (message) {
@@ -116,7 +116,7 @@ class MathBot extends DiscordBot {
     } else {
       // Generic help
       helptext = MathBot.helpIcon + '\n' +
-        'Type **help x** to get help for function ***x***.\n' +
+        'Type **help x** to get help for ***x***.\n' +
         'For general help and a list of all data types, functions and symbols, visit:\n' +
         MathBot.helpLink
     }
@@ -138,7 +138,6 @@ class MathBot extends DiscordBot {
   }
 }
 
-// TODO make this configurable
 MathBot.helpLink = 'https://github.com/pezcode/discord-math-bot/blob/master/docs/HELP.md'
 MathBot.helpIcon = ':grey_question:'
 MathBot.errorIcon = ':exclamation:'
