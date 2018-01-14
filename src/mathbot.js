@@ -41,7 +41,7 @@ class MathBot extends DiscordBot {
         doc.content = scope
         this.scopes.save(message.channel.id, doc)
         message.reply(result)
-      })
+      }, math.json.reviver) // http://mathjs.org/examples/serialization.js.html
       return true
     }
   }

@@ -36,7 +36,7 @@ class Store {
     this.db = nano(url.href)
   }
 
-  load (id, callback) {
+  load (id, callback, reviver) {
     this.db.get(id, (err, body) => {
       let content
       if (err) {
@@ -48,6 +48,11 @@ class Store {
         }
       } else {
         content = body
+      }
+      if (reviver) {
+        for (const property in content) {
+          content[property] = reviver(property, content[property])
+        }
       }
       callback(new Document(content))
     })
