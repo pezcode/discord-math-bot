@@ -43,7 +43,7 @@ class DiscordBot {
       })
       .catch(error => {
         console.error('Error while logging in: ' + error.message)
-        this.stop()
+        process.exit(0)
       })
   }
 
