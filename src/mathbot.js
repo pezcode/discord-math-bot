@@ -5,6 +5,13 @@ const Parser = require('./math/parser.js')
 const math = require('mathjs')
 const Store = require('./store.js')
 
+/*
+TODO
+check if we have write access to channel before evaluating
+send multiple messages if message exceeds character limit (see send options of discord.js)
+cache scopes in memory
+*/
+
 class MathBot extends DiscordBot {
   constructor (options) {
     super(options)
@@ -71,6 +78,7 @@ class MathBot extends DiscordBot {
     // dont print Function
     // TODO return help for Function? return this.onCommandHelp(name)
     // generic Object? -> make sure it's not from mathjs and printable
+    // ResultSet -> only print last result
     return value.toString()
   }
 
@@ -131,7 +139,7 @@ class MathBot extends DiscordBot {
 }
 
 // TODO make this configurable
-MathBot.helpLink = 'https://github.com/pezcode/discord-math-bot/blob/master/README.md'
+MathBot.helpLink = 'https://github.com/pezcode/discord-math-bot/blob/master/docs/HELP.md'
 MathBot.helpIcon = ':grey_question:'
 MathBot.errorIcon = ':exclamation:'
 

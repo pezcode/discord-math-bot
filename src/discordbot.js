@@ -137,7 +137,7 @@ class DiscordBot {
   onReady () {
     console.log('Logged in as ' + this.client.user.tag)
     for (const guild of this.client.guilds.values()) {
-      console.log('Connected to server ' + guild.name + ' (' + guild.id + ')')
+      console.log('Connected to guild ' + guild.name + ' (' + guild.id + ')')
       if (!this.checkGuildLists(guild)) {
         console.log('Leaving guild')
         guild.leave()
@@ -166,12 +166,10 @@ class DiscordBot {
       console.log('Leaving guild')
       guild.leave()
     }
-    // TODO write hello message
   }
 
   onGuildDelete (guild) {
     console.log('Left guild ' + guild.name + ' (' + guild.id + ')')
-    // TODO write goodbye message? Is that possible?
   }
 
   // Chat messages
