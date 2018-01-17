@@ -111,10 +111,7 @@ class DiscordBot {
         reply = 'Command ' + command.name + ' only invocable by bot owner'
       } else {
         console.log('Invoking command ' + command.name)
-        reply = command.func(message, command.args)
-      }
-      if (reply) { // command.func doesn't necessarily return a message
-        message.channel.send(reply)
+        command.func(message, command.args)
       }
       return true
     }
@@ -135,6 +132,44 @@ class DiscordBot {
 
   stripMentions (text) {
     return text.replace(/<@[0-9]+>/g, '')
+  }
+
+  // send multiple messages if character count exceeds Discord's limit of (currently) 2000
+  // discordjs has a split option in send() but it's a bit crude and can fail
+  // this version tries to split at newlines, then at whitespace, and then anywhere as a last resort
+  // also tries to keep message parts to a minimum length to not get rate limited too badly
+  sendSplitMessage(channel, content, prepend = '', append = '') {
+    const maxTotal = 10000 // A reasonable(?) upper limit
+    const minLength = 1000
+    const maxLength = 1950
+    if (content.length > maxTotal) {
+      console.log('Message too long, not sent')
+      channel.send(DiscordBot.errorIcon + ' Reply is too long (>' + maxTotal + ')')
+    } else {
+      let rest = content
+      let count = 0
+      while (rest.length > maxLength) {
+        const longest = rest.substring(0, maxLength)
+        let part
+        // find last newline
+        let split = longest.lastIndexOf('\n')
+        if (split < minLength) {
+          // not found or too early, find last whitespace
+          split = longest.search(/\s\S*$/)
+        }
+        if (split < minLength) {
+          // still nothing or too early, force end of part
+          part = longest
+          rest = rest.substring(maxLength)
+        } else {
+          part = rest.substring(0, split)
+          rest = rest.substring(split + 1)
+        }
+        channel.send((count > 0 ? prepend : '') + part + append)
+        count++
+      }
+      channel.send((count > 0 ? prepend : '') + rest)
+    }
   }
 
   // Events
@@ -200,5 +235,7 @@ class DiscordBot {
     return this.handleIfCommand(message)
   }
 }
+
+DiscordBot.errorIcon = ':exclamation:'
 
 module.exports = DiscordBot

@@ -38,8 +38,12 @@ class MathBot extends DiscordBot {
     } else {
       this.scopes.load(message.channel.id, doc => {
         let scope = doc.content
-        const result = this.evalExpression(content, scope)
-        message.channel.send(result)
+        try {
+          const result = this.evalExpression(content, scope)
+          this.sendSplitMessage(message.channel, '```js\n' + result + '\n```', '```js\n', '\n```')
+        } catch (err) {
+          message.channel.send(MathBot.errorIcon + ' ' + err.message)
+        }
         doc.content = scope
         this.scopes.save(message.channel.id, doc)
       }, math.json.reviver) // http://mathjs.org/examples/serialization.js.html
@@ -52,10 +56,10 @@ class MathBot extends DiscordBot {
       const parser = new Parser(expression)
       const node = parser.parse(scope) // throws Error (blocked function), SyntaxError
       const result = node.eval() // throws Error, TypeError, DimensionError, RangeError
-      return '```js\n' + this.formatEvalResult(result) + '\n```'
+      return this.formatEvalResult(result)
     } catch (err) {
       console.error(err)
-      return MathBot.errorIcon + ' ' + err.message
+      throw err
     }
   }
 
@@ -72,7 +76,7 @@ class MathBot extends DiscordBot {
           return result.toString()
         }
       case 'Matrix': // one line for each row, but not for too large matrices
-        if (result.value._size.length === 2 && result.value._size[0] <= 10) {
+        if (result.value._size.length === 2 && result.value._size[0] <= 20) {
           return '[' + result.value._data.join(']\n[') + ']'
         } else {
           return result.toString()
@@ -110,44 +114,46 @@ class MathBot extends DiscordBot {
   }
 
   onCommandHelp (message, params) {
-    let helptext = ''
     if (params.length > 0) {
       // item help
       const item = params[0]
       try {
-        helptext = MathBot.helpIcon + ' **' + item + '**\n' +
-          '```' + math.help(item) + '```'
+        const help = MathBot.helpIcon + ' **' + item + '**\n' +
+          '```\n' + math.help(item) + '\n```'
+        this.sendSplitMessage(message.channel, help, '```\n', '\n```')
       } catch (err) {
-        helptext = MathBot.errorIcon + ' No documentation found for **' + item + '**'
+        const help = MathBot.errorIcon + ' No documentation found for **' + item + '**'
+        message.channel.send(help)
       }
       // ignore extra params
     } else {
       // Generic help
-      helptext = MathBot.helpIcon + '\n' +
+      const help = MathBot.helpIcon + '\n' +
         'Type **help x** to get help for ***x***.\n' +
         'For general help and a list of all data types, functions and symbols, visit:\n' +
         MathBot.helpLink
+      message.channel.send(help)
     }
-    return helptext
   }
 
   onCommandClear (message) {
     // clear current channel scope
+    let reply
     if (this.isDMChannel(message.channel) ||
         this.isOwner(message.user) ||
         message.member.hasPermission('MANAGE_CHANNELS', false, true, true)) {
+      console.log('Clearing parser scope')
       this.scopes.delete(message.channel.id)
+      reply = 'Scope cleared'
     } else {
       console.log('Attempted to clear scope without permission')
-      return MathBot.errorIcon + ' MANAGE_CHANNELS permission / admin / server owner role required'
+      reply = MathBot.errorIcon + ' MANAGE_CHANNELS permission / admin / server owner role required'
     }
-    console.log('Clearing parser scope')
-    return 'Scope cleared'
+    message.channel.send(reply)
   }
 }
 
 MathBot.helpLink = 'https://github.com/pezcode/discord-math-bot/blob/master/docs/HELP.md'
 MathBot.helpIcon = ':grey_question:'
-MathBot.errorIcon = ':exclamation:'
 
 module.exports = MathBot
