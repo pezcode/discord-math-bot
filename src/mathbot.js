@@ -39,7 +39,7 @@ class MathBot extends DiscordBot {
       this.scopes.load(message.channel.id, doc => {
         let scope = doc.content
         const result = this.evalExpression(content, scope)
-        message.reply(result)
+        message.channel.send(result)
         doc.content = scope
         this.scopes.save(message.channel.id, doc)
       }, math.json.reviver) // http://mathjs.org/examples/serialization.js.html

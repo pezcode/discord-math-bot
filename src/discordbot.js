@@ -114,7 +114,7 @@ class DiscordBot {
         reply = command.func(message, command.args)
       }
       if (reply) { // command.func doesn't necessarily return a message
-        message.reply(reply)
+        message.channel.send(reply)
       }
       return true
     }

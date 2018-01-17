@@ -2,7 +2,6 @@ To-Do
 =====
 
 ## Discord
-- don't always quote user in server channels
 - send multiple messages if message exceeds character limit
   - https://github.com/hydrabolt/discord.js/issues/653
 - config per server (what permissions are required?)
