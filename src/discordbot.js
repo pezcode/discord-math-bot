@@ -120,12 +120,17 @@ class DiscordBot {
     }
   }
 
-  isDirectMessage (message) {
-    return (message.channel.type === 'dm')
+  isDMChannel (channel) {
+    return (channel.type === 'dm')
   }
 
-  isGuildMessage (message) {
-    return (message.channel.type === 'text')
+  isGuildChannel (channel) {
+    return (channel.type === 'text')
+  }
+
+  isChannelWritable (channel) {
+    return this.isDMChannel(channel) ||
+      channel.permissionsFor(this.me()).has('SEND_MESSAGES')
   }
 
   stripMentions (text) {
@@ -177,9 +182,9 @@ class DiscordBot {
   onMessage (message) {
     message.stripped = this.stripMentions(message.content).trim()
     if (!this.isMe(message.author) && !message.system) {
-      if (this.isDirectMessage(message)) {
+      if (this.isDMChannel(message.channel)) {
         this.onDirectMessage(message)
-      } else if (this.isGuildMessage(message)) {
+      } else if (this.isGuildChannel(message.channel)) {
         this.onGuildMessage(message)
       }
     }

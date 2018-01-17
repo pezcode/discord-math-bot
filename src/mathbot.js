@@ -82,6 +82,14 @@ class MathBot extends DiscordBot {
     }
   }
 
+  onMessage (message) {
+    if (!this.isChannelWritable(message.channel)) {
+      console.log('Message from read-only channel, ignoring')
+    } else {
+      super.onMessage(message)
+    }
+  }
+
   onDirectMessage (message) {
     let handled = super.onDirectMessage(message)
     if (!handled) {
@@ -125,7 +133,7 @@ class MathBot extends DiscordBot {
 
   onCommandClear (message) {
     // clear current channel scope
-    if (this.isDirectMessage(message) ||
+    if (this.isDMChannel(message.channel) ||
         this.isOwner(message.user) ||
         message.member.hasPermission('MANAGE_CHANNELS', false, true, true)) {
       this.scopes.delete(message.channel.id)
