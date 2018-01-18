@@ -70,16 +70,14 @@ To start the bot simply:
 npm start
 ```
 
-To keep it running and restart after disconnects or crashes:
-
-```bash
-npm run forever
-# To stop it again:
-npm run forever-stop
-```
-
 To run and restart on changes to source files (useful during development):
 
 ```bash
 npm run watch
 ```
+
+If you need a good process manager for running this on a server, I would suggest [PM2](http://pm2.keymetrics.io/).
+
+### Inviting the bot
+
+After starting the bot it will tell you the invite link. Open that in your browser, log in with your Discord account and select a server.
