@@ -102,13 +102,11 @@ class DiscordBot {
       console.log('Unknown command: ' + command.name)
       return false
     } else {
-      let reply = null
       if (message.author.bot) {
         console.log('Command invoked by a bot, ignoring')
-        reply = "Bots can't run commands"
       } else if (command.admin && !this.isOwner(message.author)) {
         console.log('Command ' + command.name + ' only invocable by bot owner')
-        reply = 'Command ' + command.name + ' only invocable by bot owner'
+        message.channel.send('Command ' + command.name + ' only invocable by bot owner')
       } else {
         console.log('Invoking command ' + command.name)
         command.func(message, command.args)
@@ -138,8 +136,8 @@ class DiscordBot {
   // discordjs has a split option in send() but it's a bit crude and can fail
   // this version tries to split at newlines, then at whitespace, and then anywhere as a last resort
   // also tries to keep message parts to a minimum length to not get rate limited too badly
-  sendSplitMessage(channel, content, prepend = '', append = '') {
-    const maxTotal = 10000 // A reasonable(?) upper limit
+  sendSplitMessage (channel, content, prepend = '', append = '') {
+    const maxTotal = 10000 // a reasonable(?) upper limit
     const minLength = 1000
     const maxLength = 1950
     if (content.length > maxTotal) {
