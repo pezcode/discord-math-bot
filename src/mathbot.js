@@ -36,16 +36,18 @@ class MathBot extends DiscordBot {
       console.log('Empty message')
       return false
     } else {
-      this.scopes.load(message.channel.id, doc => {
-        let scope = doc.content
-        try {
-          const result = this.evalExpression(content, scope)
-          this.sendSplitMessage(message.channel, '```js\n' + result + '\n```', '```js\n', '\n```')
-        } catch (err) {
-          message.channel.send(MathBot.errorIcon + ' ' + err.message)
+      this.scopes.load(message.channel.id, (err, doc) => {
+        if (!err) {
+          let scope = doc.content
+          try {
+            const result = this.evalExpression(content, scope)
+            this.sendSplitMessage(message.channel, '```js\n' + result + '\n```', '```js\n', '\n```')
+          } catch (err) {
+            message.channel.send(MathBot.errorIcon + ' ' + err.message)
+          }
+          doc.content = scope
+          this.scopes.save(message.channel.id, doc)
         }
-        doc.content = scope
-        this.scopes.save(message.channel.id, doc)
       }, math.json.reviver) // http://mathjs.org/examples/serialization.js.html
       return true
     }
@@ -75,6 +77,8 @@ class MathBot extends DiscordBot {
         } else {
           return result.toString()
         }
+      case 'Array': // matrices can be native Arrays, see math.config
+        return result.toString()
       case 'Matrix': // one line for each row, but not for too large matrices
         if (result.value._size.length === 2 && result.value._size[0] <= 20) {
           return '[' + result.value._data.join(']\n[') + ']'
@@ -155,5 +159,6 @@ class MathBot extends DiscordBot {
 
 MathBot.helpLink = 'https://github.com/pezcode/discord-math-bot/blob/master/docs/HELP.md'
 MathBot.helpIcon = ':grey_question:'
+MathBot.infoIcon = ':information_source:'
 
 module.exports = MathBot

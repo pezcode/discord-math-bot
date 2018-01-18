@@ -3,32 +3,8 @@
 const nano = require('nano')
 const { URL } = require('url')
 
-class Document {
-  constructor (doc) {
-    this.id = doc._id
-    this.rev = doc._rev
-    this._content = doc
-  }
-
-  // use _content to get the document with _id and _rev
-
-  get content () {
-    let clean = Object.assign({}, this._content)
-    delete clean._id
-    delete clean._rev
-    return clean
-  }
-
-  set content (clean) {
-    this._content = Object.assign({}, clean)
-    this._content._id = this.id
-    this._content._rev = this.rev
-  }
-}
-
 class Store {
   constructor () {
-    // TODO https for secure cross-domain access to DB
     let url = new URL(process.env.DB_HOST)
     url.username = process.env.DB_USER
     url.password = process.env.DB_PASS
@@ -36,48 +12,76 @@ class Store {
     this.db = nano(url.href)
   }
 
-  load (id, callback, reviver) {
-    this.db.get(id, (err, body) => {
-      let content
+  load (key, callback, reviver) {
+    this.db.get(key, (err, body) => {
       if (err) {
-        content = { _id: id }
         if (err.error === 'not_found') {
-          console.log('No document with this id')
+          this.db.insert({}, key, (err, body) => {
+            if (!err) {
+              callback(null, new Store.Document({
+                _id: body.id,
+                _rev: body.rev
+              }))
+            } else {
+              callback(err, null)
+              console.error(err)
+            }
+          })
         } else {
+          callback(err, null)
           console.error(err)
         }
       } else {
-        content = body
-      }
-      if (reviver) {
-        for (const property in content) {
-          content[property] = reviver(property, content[property])
+        if (reviver) { // deserialize custom types
+          for (const property in body) {
+            body[property] = reviver(property, body[property])
+          }
         }
+        callback(null, new Store.Document(body))
       }
-      callback(new Document(content))
     })
   }
 
-  save (id, doc) {
-    this.db.insert(doc._content, doc.id, (err, body) => {
+  save (key, doc) {
+    this.db.insert(doc.raw, (err, body) => {
       if (err) {
         console.error(err)
+      } else {
+        doc.raw._rev = body.rev
       }
     })
   }
 
-  delete (id) {
-    this.db.get(id, (err, body) => {
+  delete (key) {
+    this.db.get(key, (err, body) => {
       if (!err) {
         this.db.destroy(body._id, body._rev, (err, body) => {
           if (err) {
             console.error(err)
           }
         })
-      } else {
+      } else if (err.error !== 'not_found') {
         console.error(err)
       }
     })
+  }
+}
+
+Store.Document = class {
+  constructor (doc) {
+    this.raw = doc
+  }
+
+  // use raw to get the document with _id and _rev
+  get content () {
+    let clean = Object.assign({}, this.raw)
+    delete clean._id
+    delete clean._rev
+    return clean
+  }
+
+  set content (clean) {
+    this.raw = Object.assign({ _id: this.raw._id, _rev: this.raw._rev }, clean)
   }
 }
 
