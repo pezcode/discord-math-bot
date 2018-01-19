@@ -3,39 +3,49 @@
 const Value = require('./value.js')
 
 class Node {
-  constructor (tree, scope) {
+  constructor (tree) {
     this.tree = tree
-    this.scope = scope
-    this.code = this.tree.compile()
-  }
-
-  // http://mathjs.org/docs/expressions/expression_trees.html
-  hasSymbol (symbols) {
-    let found = []
-    this.tree.traverse(node => {
-      switch (node.type) {
-        case 'FunctionNode': // documentation says node.fn instead of node.name
-        case 'SymbolNode':
-          if (symbols.indexOf(node.name) !== -1) {
-            found.push(node.name)
-          }
-          break
-      }
-    })
-    return found
-  }
-
-  getScope () {
-    return this.scope
   }
 
   toTex () {
     return this.tree.toTex()
   }
 
-  eval () {
-    return new Value(this.code.eval(this.scope))
+  // check for blocked functions and symbols in the tree
+  // also check symbols for function names to prevent reassignment
+  // eg. a = compile; a("1+2")
+  // check for function creations: f(x) = x^2
+  // http://mathjs.org/docs/expressions/expression_trees.html
+  checkSafety () {
+    let found = []
+    this.tree.traverse(node => {
+      switch (node.type) {
+        case 'FunctionNode': // documentation says node.fn instead of node.name
+        case 'SymbolNode':
+          if (Node.blockedFunctions.indexOf(node.name) !== -1) {
+            throw new Error('Function ' + node.name + ' is disabled')
+          }
+          break
+        case 'FunctionAssignmentNode':
+          throw new Error('Creating functions is disabled')
+          break
+      }
+    })
+  }
+
+  eval (scope = {}) {
+    if (!this.code) {
+      this.code = this.tree.compile()
+    }
+    return new Value(this.code.eval(scope))
   }
 }
+
+Node.blockedFunctions = [
+  'import', 'config', 'typed', // Core functions
+  'createUnit', // Construction functions
+  'compile', 'eval', 'help', 'parse', 'parser', // Expression functions
+  'derivative', 'simplify' // Algebra functions
+]
 
 module.exports = Node

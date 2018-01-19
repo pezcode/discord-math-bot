@@ -56,8 +56,8 @@ class MathBot extends DiscordBot {
   evalExpression (expression, scope) {
     try {
       const parser = new Parser(expression)
-      const node = parser.parse(scope) // throws Error (blocked function), SyntaxError
-      const result = node.eval() // throws Error, TypeError, DimensionError, RangeError
+      const node = parser.parse() // throws Error (blocked function), SyntaxError
+      const result = node.eval(scope) // throws Error, TypeError, DimensionError, RangeError
       return this.formatEvalResult(result)
     } catch (err) {
       console.error(err)
