@@ -41,12 +41,15 @@ class MathBot extends DiscordBot {
           let scope = doc.content
           try {
             const result = this.evalExpression(content, scope)
-            this.sendSplitMessage(message.channel, '```js\n' + result + '\n```', '```js\n', '\n```')
+            // console.log(result)
+            this.sendSplitMessage(message.channel, '```js\n' + this.formatEvalResult(result) + '\n```', '```js\n', '\n```')
+            // save last result in special variable
+            scope[MathBot.variables.result] = result.value
+            doc.content = scope
+            this.scopes.save(message.channel.id, doc)
           } catch (err) {
             message.channel.send(MathBot.errorIcon + ' ' + err.message)
           }
-          doc.content = scope
-          this.scopes.save(message.channel.id, doc)
         }
       }, math.json.reviver) // http://mathjs.org/examples/serialization.js.html
       return true
@@ -58,7 +61,7 @@ class MathBot extends DiscordBot {
       const parser = new Parser(expression)
       const node = parser.parse() // throws Error (blocked function), SyntaxError
       const result = node.eval(scope) // throws Error, TypeError, DimensionError, RangeError
-      return this.formatEvalResult(result)
+      return result
     } catch (err) {
       console.error(err)
       throw err
@@ -66,7 +69,6 @@ class MathBot extends DiscordBot {
   }
 
   formatEvalResult (result) {
-    console.log(result)
     switch (result.type) {
       case 'string':
         return '"' + result.toString() + '"'
@@ -160,5 +162,8 @@ class MathBot extends DiscordBot {
 MathBot.helpLink = 'https://github.com/pezcode/discord-math-bot/blob/master/docs/HELP.md'
 MathBot.helpIcon = ':grey_question:'
 MathBot.infoIcon = ':information_source:'
+MathBot.variables = {
+  result: '$r'
+}
 
 module.exports = MathBot

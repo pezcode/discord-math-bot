@@ -44,6 +44,10 @@ There are two ways to do this:
 a = 3; b = 2; a + b
 ```
 
+## Special variables
+
+- `$r`: The result of the last expression
+
 ## Scope
 
 The bot keeps a scope with all defined variables for the current channel. If you define a variable `a`:
@@ -86,3 +90,7 @@ Creation of custom functions is also disabled for security reasons. Since they a
 f(x) = x^2
 ```
 will result in an error.
+
+## Bot commands
+
+See [COMMANDS](COMMANDS.md)
