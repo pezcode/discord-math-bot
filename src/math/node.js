@@ -17,7 +17,6 @@ class Node {
   // check for function creations: f(x) = x^2
   // http://mathjs.org/docs/expressions/expression_trees.html
   checkSafety () {
-    let found = []
     this.tree.traverse(node => {
       switch (node.type) {
         case 'FunctionNode': // documentation says node.fn instead of node.name
@@ -28,7 +27,6 @@ class Node {
           break
         case 'FunctionAssignmentNode':
           throw new Error('Creating functions is disabled')
-          break
       }
     })
   }
