@@ -21,7 +21,7 @@ If the current channel is not a direct message, the user must have the *MANAGE_C
 
 Prints help about the bot and math.js.
 
-If no parameter is specified, displays a link to this document. If there is a parameter, prints documentation about math.js functions, types and constants.
+If no parameter is specified, displays a link to [HELP](HELP.md). If there is a parameter, prints documentation about math.js functions, types and constants.
 
 Examples:
 ```

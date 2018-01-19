@@ -12,7 +12,7 @@ cd discord-math-bot
 npm install
 ```
 
-### Database
+## Database
 
 You also need an instance of [CouchDB](http://couchdb.apache.org/). If you want to install and run it locally, follow the [documentation](http://docs.couchdb.org/en/master/install/index.html).
 
@@ -26,7 +26,7 @@ Bot configuration is stored in _config.json_. Rename _config.json.example_ to _c
 You will need a Discord Bot App to run the bot. Go to the [Discord Developer website](https://discordapp.com/developers/applications/me) and create a new bot app. Replace `bot_token` with the secret bot token given for your app.
 **Don't share the token with other people!**
 
-### Bot
+## Bot
 
 The bot can be configured with additional settings in _config.json_:
 
@@ -48,7 +48,7 @@ The bot can be configured with additional settings in _config.json_:
   - the bot leaves any server that's on the list
   - blacklist has priority over whitelist (ie. the bot leaves servers that are on both lists)
 
-### Database
+## Database
 
 Database configuration is stored in the following environment variables:
 
@@ -78,6 +78,6 @@ npm run watch
 
 If you need a good process manager for running this on a server, I would suggest [PM2](http://pm2.keymetrics.io/).
 
-### Inviting the bot
+## Inviting the bot
 
 After starting the bot it will tell you the invite link. Open that in your browser, log in with your Discord account and select a server.
